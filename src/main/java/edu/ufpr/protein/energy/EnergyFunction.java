@@ -11,8 +11,8 @@ import java.util.Set;
 
 import edu.ufpr.hp.protein.domain.AminoAcid;
 import edu.ufpr.hp.protein.domain.AminoAcidType;
+import edu.ufpr.hp.protein.domain.Point;
 import edu.ufpr.hp.protein.domain.TopologyContact;
-import javafx.geometry.Point3D;
 
 /**
  *
@@ -27,9 +27,9 @@ public class EnergyFunction {
         int[] minCordinates = getMinCoordinates(aminoAcidsPoints);
         int[][][] grid = new int[size][size][size];
         for (int i = 0; i < aminoAcidsPoints.size(); i++) {
-            int x = (int) aminoAcidsPoints.get(i).getPoint().getX() - (minCordinates[0]);
-            int y = (int) aminoAcidsPoints.get(i).getPoint().getY() - (minCordinates[1]);
-            int z = (int) aminoAcidsPoints.get(i).getPoint().getZ()-(minCordinates[2]);
+            int x = aminoAcidsPoints.get(i).getPoint().getX() - (minCordinates[0]);
+            int y = aminoAcidsPoints.get(i).getPoint().getY() - (minCordinates[1]);
+            int z = aminoAcidsPoints.get(i).getPoint().getZ() - (minCordinates[2]);
             grid[x][y][z] = i;
         }
         return grid;
@@ -42,9 +42,9 @@ public class EnergyFunction {
         int[][][] grid = get3dGrid(aminoAcids);
         for (int i = 0; i < aminoAcids.size(); i++) {
             
-            int x = (int) aminoAcids.get(i).getPoint().getX() - (minCordinates[0]);
-            int y = (int) aminoAcids.get(i).getPoint().getY() - (minCordinates[1]);
-            int z = (int) aminoAcids.get(i).getPoint().getZ()-(minCordinates[2]);
+            int x = aminoAcids.get(i).getPoint().getX() - (minCordinates[0]);
+            int y = aminoAcids.get(i).getPoint().getY() - (minCordinates[1]);
+            int z = aminoAcids.get(i).getPoint().getZ() - (minCordinates[2]);
             
             if (aminoAcids.get(i).getAminoAcidType().equals(AminoAcidType.P)) {
                 continue;
@@ -128,45 +128,17 @@ public class EnergyFunction {
         return false;
     }
     
-//    public static Set<TopologyContact> getTopologyContacts(List<Residue> residues, Grid grid) {
-//
-//        Set<TopologyContact> topologyContacts = new HashSet<>();
-//        int[][] matrix = grid.getMatrix();
-//        int index = 0;
-//        for (int i = 0; i < residues.size(); i++) {
-//            if (residues.get(i).getResidueType().equals(ResidueType.P)) {
-//                continue;
-//            }
-//            if (residues.get(i).getPoint().y + 1 < matrix.length) {
-//                index = matrix[residues.get(i).getPoint().y + 1][residues.get(i).getPoint().x];
-//                // test up
-//                if (isTopologicalContact(i, index, residues)) {
-//                    topologyContacts.add(new TopologyContact(residues.get(i), residues.get(index)));
-//                }
-//            }
-//            if (residues.get(i).getPoint().x + 1 < matrix.length) {
-//                // test right
-//                index = matrix[residues.get(i).getPoint().y][residues.get(i).getPoint().x + 1];
-//                if (isTopologicalContact(i, index, residues)) {
-//                    topologyContacts.add(new TopologyContact(residues.get(i), residues.get(index)));
-//                }
-//            }
-//            if (residues.get(i).getPoint().y - 1 >= 0) {
-//                // test down
-//                index = matrix[residues.get(i).getPoint().y - 1][residues.get(i).getPoint().x];
-//                if (isTopologicalContact(i, index, residues)) {
-//                    topologyContacts.add(new TopologyContact(residues.get(i), residues.get(index)));
-//                }
-//            }
-//            if (residues.get(i).getPoint().x - 1 >= 0) {
-//                // test back
-//                index = matrix[residues.get(i).getPoint().y][residues.get(i).getPoint().x - 1];
-//                if (isTopologicalContact(i, index, residues)) {
-//                    topologyContacts.add(new TopologyContact(residues.get(i), residues.get(index)));
-//                }
-//            }
-//
-//        }
-//        return topologyContacts;
-//    }
+    public static int getCollisionsCount(List<AminoAcid> aminoAcids) {
+
+        Set<Point> pointsSet = new HashSet<>();
+        int count = 0;
+        for (int i = 0; i < aminoAcids.size(); i++) {
+            boolean added = pointsSet.add(aminoAcids.get(i).getPoint());
+            if (!added) {
+                count++;
+            }
+        }
+        return count;
+    }
+
 }
