@@ -4,6 +4,18 @@
 package edu.ufpr.hp.protein.visual3d;
 
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
+import edu.ufpr.hp.protein.domain.AminoAcid;
+import edu.ufpr.hp.protein.domain.Point;
+import edu.ufpr.hp.protein.domain.TopologyContact;
+import edu.ufpr.hp.protein.utils.AminoAcidSequenceUtils;
+import edu.ufpr.hp.protein.utils.AminoAcidType;
+import edu.ufpr.hp.protein.utils.MovementEnum;
+import edu.ufpr.hp.protein.utils.MovementUtils;
+import edu.ufpr.protein.energy.EnergyFunction;
 import javafx.animation.Interpolator;
 import javafx.animation.RotateTransition;
 import javafx.animation.Timeline;
@@ -11,6 +23,7 @@ import javafx.application.Application;
 import javafx.beans.binding.Bindings;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
+import javafx.geometry.Point3D;
 import javafx.scene.Group;
 import javafx.scene.PerspectiveCamera;
 import javafx.scene.Scene;
@@ -18,6 +31,7 @@ import javafx.scene.SceneAntialiasing;
 import javafx.scene.SubScene;
 import javafx.scene.control.CheckBox;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
@@ -28,6 +42,7 @@ import javafx.scene.shape.DrawMode;
 import javafx.scene.shape.MeshView;
 import javafx.scene.shape.Sphere;
 import javafx.scene.shape.TriangleMesh;
+import javafx.scene.text.Text;
 import javafx.scene.transform.Rotate;
 import javafx.stage.Stage;
 import javafx.util.Duration;
@@ -60,6 +75,32 @@ public class MoleculeSampleApp extends Application {
     double mouseDeltaX;
     double mouseDeltaY;
 
+    private static final int DISTANCE = 40;
+
+    private static final MovementEnum[] FIXED_SOLUTION = new MovementEnum[] { MovementEnum.U, MovementEnum.U,
+        MovementEnum.U, MovementEnum.L, MovementEnum.F, MovementEnum.R, MovementEnum.R, MovementEnum.L, MovementEnum.F,
+        MovementEnum.U, MovementEnum.U, MovementEnum.D, MovementEnum.F, MovementEnum.L, MovementEnum.F, MovementEnum.R,
+        MovementEnum.F, MovementEnum.D, MovementEnum.L, MovementEnum.U, MovementEnum.U, MovementEnum.F, MovementEnum.U,
+        MovementEnum.F, MovementEnum.U, MovementEnum.F, MovementEnum.F, MovementEnum.U, MovementEnum.L, MovementEnum.D,
+        MovementEnum.R, MovementEnum.F, MovementEnum.F, MovementEnum.U, MovementEnum.D, MovementEnum.L, MovementEnum.U,
+        MovementEnum.F, MovementEnum.R, MovementEnum.L, MovementEnum.L, MovementEnum.F, MovementEnum.L, MovementEnum.F,
+        MovementEnum.F, MovementEnum.R };
+
+    private static final String PROTEIN_CHAIN = "PHHHHHHHHHHPHHHHHHHPHHHHHHHHPHHHHHHHPPPHPHPHPPH";
+    private List<Point3D> aminoAcidsCordinates;
+    private List<AminoAcid> aminoAcidsList;
+
+    private static final String ENERGY_LABEL = "Energy: - %s";
+
+    private static final String COLLISIONS_LABEL = "Collisions: %s";
+
+    private Text energyText;
+
+    private Text collisionsText;
+
+    private int energy = 0;
+    private int collisions = 0;
+
     private MeshView meshView = loadMeshView();
 
     private MeshView loadMeshView() {
@@ -77,10 +118,14 @@ public class MoleculeSampleApp extends Application {
         return new MeshView(mesh);
     }
 
+    public MoleculeSampleApp() {
+        aminoAcidsList = new ArrayList<>();
+        aminoAcidsCordinates = new ArrayList<Point3D>();
+        energyText = new Text(String.format(ENERGY_LABEL, energy));
+        collisionsText = new Text(String.format(COLLISIONS_LABEL, collisions));
+    }
+
     private void buildScene() {
-
-
-
         root.getChildren().add(world);
     }
 
@@ -125,83 +170,6 @@ public class MoleculeSampleApp extends Application {
         world.getChildren().addAll(axisGroup);
     }
 
-    private void buildMolecule() {
-
-        final PhongMaterial redMaterial = new PhongMaterial();
-        redMaterial.setDiffuseColor(Color.DARKRED);
-        redMaterial.setSpecularColor(Color.RED);
-
-        final PhongMaterial whiteMaterial = new PhongMaterial();
-        whiteMaterial.setDiffuseColor(Color.WHITE);
-        whiteMaterial.setSpecularColor(Color.LIGHTBLUE);
-
-        final PhongMaterial greyMaterial = new PhongMaterial();
-        greyMaterial.setDiffuseColor(Color.DARKGREY);
-        greyMaterial.setSpecularColor(Color.GREY);
-
-        // Molecule Hierarchy
-        // [*] moleculeXform
-        // [*] oxygenXform
-        // [*] oxygenSphere
-        // [*] hydrogen1SideXform
-        // [*] hydrogen1Xform
-        // [*] hydrogen1Sphere
-        // [*] bond1Cylinder
-        // [*] hydrogen2SideXform
-        // [*] hydrogen2Xform
-        // [*] hydrogen2Sphere
-        // [*] bond2Cylinder
-
-        Xform moleculeXform = new Xform();
-        Xform oxygenXform = new Xform();
-        Xform hydrogen1SideXform = new Xform();
-        Xform hydrogen1Xform = new Xform();
-        Xform hydrogen2SideXform = new Xform();
-        Xform hydrogen2Xform = new Xform();
-
-        Sphere oxygenSphere = new Sphere(40.0);
-        oxygenSphere.setMaterial(redMaterial);
-
-        Sphere hydrogen1Sphere = new Sphere(30.0);
-        hydrogen1Sphere.setMaterial(whiteMaterial);
-        hydrogen1Sphere.setTranslateX(0.0);
-
-        Sphere hydrogen2Sphere = new Sphere(30.0);
-        hydrogen2Sphere.setMaterial(whiteMaterial);
-        hydrogen2Sphere.setTranslateZ(0.0);
-
-        Cylinder bond1Cylinder = new Cylinder(5, 100);
-        bond1Cylinder.setMaterial(greyMaterial);
-        bond1Cylinder.setTranslateX(50.0);
-        bond1Cylinder.setRotationAxis(Rotate.Z_AXIS);
-        bond1Cylinder.setRotate(90.0);
-
-        Cylinder bond2Cylinder = new Cylinder(5, 100);
-        bond2Cylinder.setMaterial(greyMaterial);
-        bond2Cylinder.setTranslateX(50.0);
-        bond2Cylinder.setRotationAxis(Rotate.Z_AXIS);
-        bond2Cylinder.setRotate(90.0);
-
-        moleculeXform.getChildren().add(oxygenXform);
-        moleculeXform.getChildren().add(hydrogen1SideXform);
-        moleculeXform.getChildren().add(hydrogen2SideXform);
-        oxygenXform.getChildren().add(oxygenSphere);
-        hydrogen1SideXform.getChildren().add(hydrogen1Xform);
-        hydrogen2SideXform.getChildren().add(hydrogen2Xform);
-        hydrogen1Xform.getChildren().add(hydrogen1Sphere);
-        hydrogen2Xform.getChildren().add(hydrogen2Sphere);
-        hydrogen1SideXform.getChildren().add(bond1Cylinder);
-        hydrogen2SideXform.getChildren().add(bond2Cylinder);
-
-        hydrogen1Xform.setTx(100.0);
-        hydrogen2Xform.setTx(100.0);
-        hydrogen2SideXform.setRotateY(104.5);
-
-        moleculeGroup.getChildren().add(moleculeXform);
-
-
-        world.getChildren().addAll(moleculeGroup);
-    }
 
     private void handleMouse(SubScene scene) {
 
@@ -261,7 +229,7 @@ public class MoleculeSampleApp extends Application {
 
         buildScene();
         buildCamera();
-        buildAxes();
+        // buildAxes();
         buildMolecule();
 
         RotateTransition rotate = rotate3dGroup(world);
@@ -287,7 +255,7 @@ public class MoleculeSampleApp extends Application {
         return scene3d;
     }
 
-    private VBox createControls(RotateTransition rotateTransition) {
+    private HBox createControls(RotateTransition rotateTransition) {
 
         CheckBox cull = new CheckBox("Cull Back");
         meshView.cullFaceProperty()
@@ -295,6 +263,8 @@ public class MoleculeSampleApp extends Application {
         CheckBox wireframe = new CheckBox("Wireframe");
         meshView.drawModeProperty()
             .bind(Bindings.when(wireframe.selectedProperty()).then(DrawMode.LINE).otherwise(DrawMode.FILL));
+
+
 
         CheckBox rotate = new CheckBox("Rotate");
         rotate.selectedProperty().addListener(observable -> {
@@ -305,7 +275,9 @@ public class MoleculeSampleApp extends Application {
             }
         });
 
-        VBox controls = new VBox(10, rotate);
+        energyText.setText(String.format(ENERGY_LABEL, energy));
+        collisionsText.setText(String.format(COLLISIONS_LABEL, collisions));
+        HBox controls = new HBox(10, rotate, energyText, collisionsText, cull, wireframe);
         controls.setPadding(new Insets(10));
         return controls;
     }
@@ -320,6 +292,505 @@ public class MoleculeSampleApp extends Application {
         rotate.setCycleCount(RotateTransition.INDEFINITE);
 
         return rotate;
+    }
+
+
+    private void buildMolecule() {
+        Xform moleculeXform = new Xform();
+
+        AminoAcidType[] aminoAcidsType = AminoAcidSequenceUtils.fromStringSequence(PROTEIN_CHAIN);
+        // adding first amino acid
+        int x = 0;
+        int y = 0;
+        int z = 0;
+
+        String lookingAxis = "Z+";
+        String headAxis = "Y+";
+        Point3D rotate = Rotate.Y_AXIS;
+
+        addAminoAcidToView(x, y, z, aminoAcidsType[0], moleculeXform, false, null, null);
+        aminoAcidsCordinates.add(new Point3D(x, y, z));
+        aminoAcidsList.add(new AminoAcid(new Point(x, y, z), aminoAcidsType[0] == AminoAcidType.H
+            ? edu.ufpr.hp.protein.domain.AminoAcidType.H : edu.ufpr.hp.protein.domain.AminoAcidType.P));
+
+        for (int i = 1; i < aminoAcidsType.length; i++) {
+            MovementEnum move = FIXED_SOLUTION[i - 1];
+            String newLookingToAxis = lookingAxis;
+            String newHeadAxis = headAxis;
+            switch (move) {
+                case F: {
+                    newLookingToAxis = lookingAxis;
+                    newHeadAxis = headAxis;
+                    switch (lookingAxis) {
+                        case "Z+": {
+                            z = z + DISTANCE;
+                            rotate = Rotate.X_AXIS;
+                            break;
+                        }
+                        case "Z-": {
+                            z = z - DISTANCE;
+                            rotate = Rotate.X_AXIS;
+                            break;
+                        }
+                        case "Y+": {
+                            y = y + DISTANCE;
+                            rotate = Rotate.Y_AXIS;
+                            break;
+                        }
+                        case "Y-": {
+                            y = y - DISTANCE;
+                            rotate = Rotate.Y_AXIS;
+                            break;
+                        }
+                        case "X+": {
+                            x = x + DISTANCE;
+                            rotate = Rotate.Z_AXIS;
+                            break;
+                        }
+                        case "X-": {
+                            x = x - DISTANCE;
+                            rotate = Rotate.Z_AXIS;
+                            break;
+                        }
+                    }
+                }
+                    break;
+                case U: {
+                    newLookingToAxis = headAxis;
+                    newHeadAxis = MovementUtils.inverterAxis(lookingAxis);
+                    switch (headAxis) {
+                        case "Y+":
+                            y = y + DISTANCE;
+                            rotate = Rotate.Y_AXIS;
+                            break;
+                        case "Y-":
+                            y = y - DISTANCE;
+                            rotate = Rotate.Y_AXIS;
+                            break;
+                        case "X-":
+                            x = x - DISTANCE;
+                            rotate = Rotate.Z_AXIS;
+                            break;
+                        case "X+":
+                            x = x + DISTANCE;
+                            rotate = Rotate.Z_AXIS;
+                            break;
+                        case "Z+":
+                            z = z + DISTANCE;
+                            rotate = Rotate.X_AXIS;
+                            break;
+                        case "Z-":
+                            z = z - DISTANCE;
+                            rotate = Rotate.X_AXIS;
+                            break;
+                    }
+                    break;
+
+                }
+                case D: {
+                    newLookingToAxis = MovementUtils.inverterAxis(headAxis);
+                    newHeadAxis = lookingAxis;
+                    switch (headAxis) {
+                        case "Y+":
+                            y = y - DISTANCE;
+                            rotate = Rotate.Y_AXIS;
+                            break;
+                        case "Y-":
+                            y = y + DISTANCE;
+                            rotate = Rotate.Y_AXIS;
+                            break;
+                        case "X-":
+                            x = x + DISTANCE;
+                            rotate = Rotate.Z_AXIS;
+                            break;
+                        case "X+":
+                            x = x - DISTANCE;
+                            rotate = Rotate.Z_AXIS;
+                            break;
+                        case "Z+":
+                            z = z - DISTANCE;
+                            rotate = Rotate.X_AXIS;
+                            break;
+                        case "Z-":
+                            z = z + DISTANCE;
+                            rotate = Rotate.X_AXIS;
+                            break;
+                    }
+                    break;
+                }
+                case L: {
+                    newHeadAxis = headAxis;
+                    switch (lookingAxis) {
+                        case "Z+":
+                            switch (headAxis) {
+                                case "Y+":
+                                    newLookingToAxis = "X+";
+                                    x = x + DISTANCE;
+                                    rotate = Rotate.Z_AXIS;
+                                    break;
+                                case "Y-":
+                                    newLookingToAxis = "X-";
+                                    x = x - DISTANCE;
+                                    rotate = Rotate.Z_AXIS;
+                                    break;
+
+                                case "X+":
+                                    newLookingToAxis = "Y-";
+                                    y = y - DISTANCE;
+                                    rotate = Rotate.Y_AXIS;
+                                    break;
+                                case "X-":
+                                    newLookingToAxis = "Y+";
+                                    y = y + DISTANCE;
+                                    rotate = Rotate.Y_AXIS;
+                                    break;
+                            }
+                            break;
+                        case "Z-":
+                            switch (headAxis) {
+                                case "Y+":
+                                    newLookingToAxis = "X-";
+                                    x = x - DISTANCE;
+                                    rotate = Rotate.Z_AXIS;
+                                    break;
+                                case "Y-":
+                                    newLookingToAxis = "X+";
+                                    x = x + DISTANCE;
+                                    rotate = Rotate.Z_AXIS;
+                                    break;
+
+                                case "X-":
+                                    newLookingToAxis = "Y-";
+                                    y = y - DISTANCE;
+                                    rotate = Rotate.Y_AXIS;
+                                    break;
+
+                                case "X+":
+                                    newLookingToAxis = "Y+";
+                                    y = y + DISTANCE;
+                                    rotate = Rotate.Y_AXIS;
+                                    break;
+
+                            }
+                            break;
+                        case "Y+":
+                            switch (headAxis) {
+                                case "X+":
+                                    newLookingToAxis = "Z+";
+                                    z = z + DISTANCE;
+                                    rotate = Rotate.X_AXIS;
+                                    break;
+                                case "X-":
+                                    newLookingToAxis = "Z-";
+                                    z = z - DISTANCE;
+                                    rotate = Rotate.X_AXIS;
+                                    break;
+                                case "Z+":
+                                    newLookingToAxis = "X-";
+                                    x = x - DISTANCE;
+                                    rotate = Rotate.Z_AXIS;
+                                    break;
+                                case "Z-":
+                                    newLookingToAxis = "X+";
+                                    x = x + DISTANCE;
+                                    rotate = Rotate.Z_AXIS;
+                                    break;
+                            }
+                            break;
+                        case "Y-":
+                            switch (headAxis) {
+                                case "X+":
+                                    newLookingToAxis = "Z-";
+                                    z = z - DISTANCE;
+                                    rotate = Rotate.X_AXIS;
+                                    break;
+                                case "X-":
+                                    newLookingToAxis = "Z+";
+                                    z = z + DISTANCE;
+                                    rotate = Rotate.X_AXIS;
+                                    break;
+                                case "Z+":
+                                    newLookingToAxis = "X+";
+                                    x = x + DISTANCE;
+                                    rotate = Rotate.Z_AXIS;
+                                    break;
+                                case "Z-":
+                                    newLookingToAxis = "X-";
+                                    x = x - DISTANCE;
+                                    rotate = Rotate.Z_AXIS;
+                                    break;
+                            }
+                            break;
+                        case "X+":
+                            switch (headAxis) {
+                                case "Z+":
+                                    newLookingToAxis = "Y+";
+                                    y = y + DISTANCE;
+                                    rotate = Rotate.Y_AXIS;
+                                    break;
+                                case "Z-":
+                                    newLookingToAxis = "Y-";
+                                    y = y - DISTANCE;
+                                    rotate = Rotate.Y_AXIS;
+                                    break;
+                                case "Y+":
+                                    newLookingToAxis = "Z-";
+                                    z = z - DISTANCE;
+                                    rotate = Rotate.X_AXIS;
+                                    break;
+                                case "Y-":
+                                    newLookingToAxis = "Z+";
+                                    z = z + DISTANCE;
+                                    rotate = Rotate.X_AXIS;
+                                    break;
+                            }
+                            break;
+                        case "X-":
+                            switch (headAxis) {
+                                case "Z+":
+                                    newLookingToAxis = "Y-";
+                                    y = y - DISTANCE;
+                                    rotate = Rotate.Y_AXIS;
+                                    break;
+                                case "Z-":
+                                    newLookingToAxis = "Y+";
+                                    y = y + DISTANCE;
+                                    rotate = Rotate.Y_AXIS;
+                                    break;
+                                case "Y+":
+                                    newLookingToAxis = "Z+";
+                                    z = z + DISTANCE;
+                                    rotate = Rotate.X_AXIS;
+                                    break;
+                                case "Y-":
+                                    newLookingToAxis = "Z-";
+                                    z = z - DISTANCE;
+                                    rotate = Rotate.X_AXIS;
+                                    break;
+                            }
+                            break;
+                    }
+                }
+                    break;
+                case R: {
+                    newHeadAxis = headAxis;
+                    switch (lookingAxis) {
+                        case "Z+":
+                            switch (headAxis) {
+                                case "Y+":
+                                    newLookingToAxis = "X-";
+                                    x = x - DISTANCE;
+                                    rotate = Rotate.Z_AXIS;
+                                    break;
+                                case "Y-":
+                                    newLookingToAxis = "X+";
+                                    x = x + DISTANCE;
+                                    rotate = Rotate.Z_AXIS;
+                                    break;
+                                case "X+":
+                                    newLookingToAxis = "Y+";
+                                    y = y + DISTANCE;
+                                    rotate = Rotate.Y_AXIS;
+                                    break;
+                                case "X-":
+                                    newLookingToAxis = "Y-";
+                                    y = y - DISTANCE;
+                                    rotate = Rotate.Y_AXIS;
+                                    break;
+                            }
+                            break;
+                        case "Z-":
+                            switch (headAxis) {
+                                case "Y+":
+                                    newLookingToAxis = "X+";
+                                    x = x + DISTANCE;
+                                    rotate = Rotate.X_AXIS;
+                                    break;
+                                case "Y-":
+                                    newLookingToAxis = "X-";
+                                    x = x - DISTANCE;
+                                    rotate = Rotate.Z_AXIS;
+                                    break;
+                                case "X+":
+                                    newLookingToAxis = "Y-";
+                                    y = y - DISTANCE;
+                                    rotate = Rotate.Y_AXIS;
+                                    break;
+                                case "X-":
+                                    newLookingToAxis = "Y+";
+                                    y = y + DISTANCE;
+                                    rotate = Rotate.Y_AXIS;
+                                    break;
+                            }
+                            break;
+                        case "Y+":
+                            switch (headAxis) {
+                                case "Z+":
+                                    newLookingToAxis = "X+";
+                                    x = x + DISTANCE;
+                                    rotate = Rotate.Z_AXIS;
+                                    break;
+                                case "Z-":
+                                    newLookingToAxis = "X-";
+                                    x = x - DISTANCE;
+                                    rotate = Rotate.Z_AXIS;
+                                    break;
+                                case "X+":
+                                    newLookingToAxis = "Z-";
+                                    z = z - DISTANCE;
+                                    rotate = Rotate.X_AXIS;
+                                    break;
+                                case "X-":
+                                    newLookingToAxis = "Z+";
+                                    z = z + DISTANCE;
+                                    rotate = Rotate.X_AXIS;
+                                    break;
+                            }
+                            break;
+                        case "Y-":
+                            switch (headAxis) {
+                                case "Z+":
+                                    newLookingToAxis = "X-";
+                                    x = x - DISTANCE;
+                                    rotate = Rotate.Z_AXIS;
+                                    break;
+                                case "Z-":
+                                    newLookingToAxis = "X+";
+                                    x = x + DISTANCE;
+                                    rotate = Rotate.Z_AXIS;
+                                    break;
+                                case "X+":
+                                    newLookingToAxis = "Z+";
+                                    z = z + DISTANCE;
+                                    rotate = Rotate.X_AXIS;
+                                    break;
+                                case "X-":
+                                    newLookingToAxis = "Z-";
+                                    z = z - DISTANCE;
+                                    rotate = Rotate.X_AXIS;
+                                    break;
+                            }
+                            break;
+                        case "X+":
+                            switch (headAxis) {
+                                case "Z+":
+                                    newLookingToAxis = "Y-";
+                                    y = y - DISTANCE;
+                                    rotate = Rotate.Y_AXIS;
+                                    break;
+                                case "Z-":
+                                    newLookingToAxis = "Y+";
+                                    y = y + DISTANCE;
+                                    rotate = Rotate.Y_AXIS;
+                                    break;
+                                case "Y+":
+                                    newLookingToAxis = "Z+";
+                                    z = z + DISTANCE;
+                                    rotate = Rotate.X_AXIS;
+                                    break;
+                                case "Y-":
+                                    newLookingToAxis = "Z-";
+                                    z = z - DISTANCE;
+                                    rotate = Rotate.X_AXIS;
+                                    break;
+                            }
+                            break;
+                        case "X-":
+                            switch (headAxis) {
+                                case "Z+":
+                                    newLookingToAxis = "Y+";
+                                    y = y + DISTANCE;
+                                    rotate = Rotate.Y_AXIS;
+                                    break;
+                                case "Z-":
+                                    newLookingToAxis = "Y-";
+                                    y = y - DISTANCE;
+                                    rotate = Rotate.Y_AXIS;
+                                    break;
+                                case "Y+":
+                                    newLookingToAxis = "Z-";
+                                    z = z - DISTANCE;
+                                    rotate = Rotate.X_AXIS;
+                                    break;
+                                case "Y-":
+                                    newLookingToAxis = "Z+";
+                                    z = z + DISTANCE;
+                                    rotate = Rotate.X_AXIS;
+                                    break;
+
+                            }
+                            break;
+                    }
+                }
+
+            }
+            lookingAxis = newLookingToAxis;
+            headAxis = newHeadAxis;
+            aminoAcidsCordinates.add(new Point3D(x, y, z));
+            aminoAcidsList.add(new AminoAcid(new Point(x / 40, y / 40, z / 40), aminoAcidsType[i] == AminoAcidType.H
+                ? edu.ufpr.hp.protein.domain.AminoAcidType.H : edu.ufpr.hp.protein.domain.AminoAcidType.P));
+            Point3D lastAminoAcid = aminoAcidsCordinates.get(aminoAcidsCordinates.size() - 2);
+            addAminoAcidToView(x, y, z, aminoAcidsType[i], moleculeXform, true, rotate, lastAminoAcid);
+
+        }
+
+        Set<TopologyContact> contacts = EnergyFunction.getTopologyContacts(aminoAcidsList);
+
+        energy = contacts.size();
+        collisions = EnergyFunction.getCollisionsCount(aminoAcidsList);
+
+        moleculeGroup.getChildren().add(moleculeXform);
+
+        world.getChildren().addAll(moleculeGroup);
+    }
+
+    public void addAminoAcidToView(double x, double y, double z, AminoAcidType atomType, Xform moleculeXform,
+                                   boolean putBond, Point3D rotate, Point3D lastAminoAcid) {
+
+        final PhongMaterial aminoAcidColor = new PhongMaterial();
+        aminoAcidColor.setDiffuseColor(atomType.getDiffuseColor());
+        aminoAcidColor.setSpecularColor(atomType.getSpecularColor());
+
+        final PhongMaterial bondColor = new PhongMaterial();
+        bondColor.setDiffuseColor(Color.DARKGREY);
+        bondColor.setSpecularColor(Color.GREY);
+
+        Xform newAminoAcidSideXform = new Xform();
+        Xform newAminoAcidXform = new Xform();
+
+        Sphere aminoAcidSphere = new Sphere(10.0);
+        aminoAcidSphere.setMaterial(aminoAcidColor);
+        aminoAcidSphere.setTranslateX(0.0);
+
+        if (putBond) {
+            double lastX = lastAminoAcid.getX();
+            double lastY = lastAminoAcid.getY();
+            double lastZ = lastAminoAcid.getZ();
+
+            Cylinder bondCylinder = new Cylinder(5, 40);
+            bondCylinder.setMaterial(bondColor);
+
+            bondCylinder.setTranslateX((x + lastX) / 2);
+            bondCylinder.setTranslateY((y + lastY) / 2);
+            bondCylinder.setTranslateZ((z + lastZ) / 2);
+
+            bondCylinder.setRotationAxis(rotate);
+            bondCylinder.setRotate(90.0);
+
+            newAminoAcidSideXform.getChildren().add(bondCylinder);
+        }
+
+        moleculeXform.getChildren().add(newAminoAcidSideXform);
+
+        newAminoAcidSideXform.getChildren().add(newAminoAcidXform);
+
+        newAminoAcidXform.getChildren().add(aminoAcidSphere);
+
+        newAminoAcidXform.setTx(x);
+
+        newAminoAcidXform.setTy(y);
+
+        newAminoAcidXform.setTz(z);
     }
 
     /**
