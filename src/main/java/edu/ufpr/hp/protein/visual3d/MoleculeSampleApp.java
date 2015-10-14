@@ -1,8 +1,7 @@
 /*
- * Copyright 2015, Charter Communications,  All rights reserved.
+ * Copyright 2015, Charter Communications, All rights reserved.
  */
 package edu.ufpr.hp.protein.visual3d;
-
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,11 +10,11 @@ import java.util.Set;
 import edu.ufpr.hp.protein.domain.AminoAcid;
 import edu.ufpr.hp.protein.domain.Point;
 import edu.ufpr.hp.protein.domain.TopologyContact;
+import edu.ufpr.hp.protein.energy.EnergyFunction;
 import edu.ufpr.hp.protein.utils.AminoAcidSequenceUtils;
 import edu.ufpr.hp.protein.utils.AminoAcidType;
 import edu.ufpr.hp.protein.utils.MovementEnum;
 import edu.ufpr.hp.protein.utils.MovementUtils;
-import edu.ufpr.protein.energy.EnergyFunction;
 import javafx.animation.Interpolator;
 import javafx.animation.RotateTransition;
 import javafx.animation.Timeline;
@@ -77,16 +76,38 @@ public class MoleculeSampleApp extends Application {
 
     private static final int DISTANCE = 40;
 
-    private static final MovementEnum[] FIXED_SOLUTION = new MovementEnum[] { MovementEnum.U, MovementEnum.U,
-        MovementEnum.U, MovementEnum.L, MovementEnum.F, MovementEnum.R, MovementEnum.R, MovementEnum.L, MovementEnum.F,
-        MovementEnum.U, MovementEnum.U, MovementEnum.D, MovementEnum.F, MovementEnum.L, MovementEnum.F, MovementEnum.R,
-        MovementEnum.F, MovementEnum.D, MovementEnum.L, MovementEnum.U, MovementEnum.U, MovementEnum.F, MovementEnum.U,
-        MovementEnum.F, MovementEnum.U, MovementEnum.F, MovementEnum.F, MovementEnum.U, MovementEnum.L, MovementEnum.D,
-        MovementEnum.R, MovementEnum.F, MovementEnum.F, MovementEnum.U, MovementEnum.D, MovementEnum.L, MovementEnum.U,
-        MovementEnum.F, MovementEnum.R, MovementEnum.L, MovementEnum.L, MovementEnum.F, MovementEnum.L, MovementEnum.F,
-        MovementEnum.F, MovementEnum.R };
+    // private static final MovementEnum[] FIXED_SOLUTION = new MovementEnum[] {
+    // MovementEnum.U, MovementEnum.U,
+    // MovementEnum.U, MovementEnum.L, MovementEnum.F, MovementEnum.R,
+    // MovementEnum.R, MovementEnum.L, MovementEnum.F,
+    // MovementEnum.U, MovementEnum.U, MovementEnum.D, MovementEnum.F,
+    // MovementEnum.L, MovementEnum.F, MovementEnum.R,
+    // MovementEnum.F, MovementEnum.D, MovementEnum.L, MovementEnum.U,
+    // MovementEnum.U, MovementEnum.F, MovementEnum.U,
+    // MovementEnum.F, MovementEnum.U, MovementEnum.F, MovementEnum.F,
+    // MovementEnum.U, MovementEnum.L, MovementEnum.D,
+    // MovementEnum.R, MovementEnum.F, MovementEnum.F, MovementEnum.U,
+    // MovementEnum.D, MovementEnum.L, MovementEnum.U,
+    // MovementEnum.F, MovementEnum.R, MovementEnum.L, MovementEnum.L,
+    // MovementEnum.F, MovementEnum.L, MovementEnum.F,
+    // MovementEnum.F, MovementEnum.R };
+    //
+    // private static final String PROTEIN_CHAIN =
+    // "PHHHHHHHHHHPHHHHHHHPHHHHHHHHPHHHHHHHPPPHPHPHPPH";
 
-    private static final String PROTEIN_CHAIN = "PHHHHHHHHHHPHHHHHHHPHHHHHHHHPHHHHHHHPPPHPHPHPPH";
+    private static final MovementEnum[] FIXED_SOLUTION = new MovementEnum[] { MovementEnum.F, MovementEnum.F,
+        MovementEnum.L, MovementEnum.L, MovementEnum.U, MovementEnum.U, MovementEnum.D, MovementEnum.L, MovementEnum.L,
+        MovementEnum.L, MovementEnum.D, MovementEnum.D, MovementEnum.U, MovementEnum.D, MovementEnum.D, MovementEnum.L,
+        MovementEnum.F, MovementEnum.L, MovementEnum.L };
+
+    private static final String PROTEIN_CHAIN = "HHHPPHHPHHHHHHHHHPPH";
+    // private static final MovementEnum[] FIXED_SOLUTION =
+    // new MovementEnum[] { MovementEnum.F, MovementEnum.F, MovementEnum.L,
+    // MovementEnum.L, MovementEnum.F,
+    // MovementEnum.R, MovementEnum.U, MovementEnum.L, MovementEnum.U,
+    // MovementEnum.L, MovementEnum.U };
+    // private static final String PROTEIN_CHAIN = "HHHPHHHPHHHH";
+
     private List<Point3D> aminoAcidsCordinates;
     private List<AminoAcid> aminoAcidsList;
 
@@ -126,6 +147,7 @@ public class MoleculeSampleApp extends Application {
     }
 
     private void buildScene() {
+
         root.getChildren().add(world);
     }
 
@@ -170,7 +192,6 @@ public class MoleculeSampleApp extends Application {
         world.getChildren().addAll(axisGroup);
     }
 
-
     private void handleMouse(SubScene scene) {
 
         scene.setOnMousePressed(new EventHandler<MouseEvent>() {
@@ -188,8 +209,6 @@ public class MoleculeSampleApp extends Application {
 
             @Override
             public void handle(MouseEvent me) {
-
-                System.out.println("aqyu");
 
                 mouseOldX = mousePosX;
                 mouseOldY = mousePosY;
@@ -222,8 +241,6 @@ public class MoleculeSampleApp extends Application {
         });
     }
 
-
-
     @Override
     public void start(Stage primaryStage) {
 
@@ -242,7 +259,6 @@ public class MoleculeSampleApp extends Application {
         primaryStage.setTitle("Molecule Sample Application");
         primaryStage.setScene(scene);
         primaryStage.show();
-
 
     }
 
@@ -263,8 +279,6 @@ public class MoleculeSampleApp extends Application {
         CheckBox wireframe = new CheckBox("Wireframe");
         meshView.drawModeProperty()
             .bind(Bindings.when(wireframe.selectedProperty()).then(DrawMode.LINE).otherwise(DrawMode.FILL));
-
-
 
         CheckBox rotate = new CheckBox("Rotate");
         rotate.selectedProperty().addListener(observable -> {
@@ -294,8 +308,8 @@ public class MoleculeSampleApp extends Application {
         return rotate;
     }
 
-
     private void buildMolecule() {
+
         Xform moleculeXform = new Xform();
 
         AminoAcidType[] aminoAcidsType = AminoAcidSequenceUtils.fromStringSequence(PROTEIN_CHAIN);
@@ -308,10 +322,10 @@ public class MoleculeSampleApp extends Application {
         String headAxis = "Y+";
         Point3D rotate = Rotate.Y_AXIS;
 
-        addAminoAcidToView(x, y, z, aminoAcidsType[0], moleculeXform, false, null, null);
+        addAminoAcidToView(x, y, z, aminoAcidsType[0], moleculeXform, false, null, null, false);
         aminoAcidsCordinates.add(new Point3D(x, y, z));
         aminoAcidsList.add(new AminoAcid(new Point(x, y, z), aminoAcidsType[0] == AminoAcidType.H
-            ? edu.ufpr.hp.protein.domain.AminoAcidType.H : edu.ufpr.hp.protein.domain.AminoAcidType.P));
+            ? edu.ufpr.hp.protein.domain.AminoAcidType.H : edu.ufpr.hp.protein.domain.AminoAcidType.P, 0));
 
         for (int i = 1; i < aminoAcidsType.length; i++) {
             MovementEnum move = FIXED_SOLUTION[i - 1];
@@ -604,7 +618,7 @@ public class MoleculeSampleApp extends Application {
                                 case "Y+":
                                     newLookingToAxis = "X+";
                                     x = x + DISTANCE;
-                                    rotate = Rotate.X_AXIS;
+                                    rotate = Rotate.Z_AXIS;
                                     break;
                                 case "Y-":
                                     newLookingToAxis = "X-";
@@ -726,11 +740,24 @@ public class MoleculeSampleApp extends Application {
             }
             lookingAxis = newLookingToAxis;
             headAxis = newHeadAxis;
-            aminoAcidsCordinates.add(new Point3D(x, y, z));
-            aminoAcidsList.add(new AminoAcid(new Point(x / 40, y / 40, z / 40), aminoAcidsType[i] == AminoAcidType.H
-                ? edu.ufpr.hp.protein.domain.AminoAcidType.H : edu.ufpr.hp.protein.domain.AminoAcidType.P));
-            Point3D lastAminoAcid = aminoAcidsCordinates.get(aminoAcidsCordinates.size() - 2);
-            addAminoAcidToView(x, y, z, aminoAcidsType[i], moleculeXform, true, rotate, lastAminoAcid);
+            Point3D point3d = new Point3D(x, y, z);
+            boolean pointCollided = false;
+            if (aminoAcidsCordinates.contains(point3d)) {
+                pointCollided = true;
+            }
+
+            aminoAcidsCordinates.add(point3d);
+
+            aminoAcidsList
+                .add(
+                    new AminoAcid(
+                        new Point(x / 40, y / 40, z / 40), aminoAcidsType[i] == AminoAcidType.H
+                            ? edu.ufpr.hp.protein.domain.AminoAcidType.H : edu.ufpr.hp.protein.domain.AminoAcidType.P,
+                i));
+
+            Point3D previousAminoAcid = aminoAcidsCordinates.get(aminoAcidsCordinates.size() - 2);
+            addAminoAcidToView(x, y, z, aminoAcidsType[i], moleculeXform, true, rotate, previousAminoAcid,
+                pointCollided);
 
         }
 
@@ -738,6 +765,9 @@ public class MoleculeSampleApp extends Application {
 
         energy = contacts.size();
         collisions = EnergyFunction.getCollisionsCount(aminoAcidsList);
+        aminoAcidsList.stream().forEach(a -> {
+            System.out.println(a.getId() + ":" + a.getPoint());
+        });
 
         moleculeGroup.getChildren().add(moleculeXform);
 
@@ -745,11 +775,16 @@ public class MoleculeSampleApp extends Application {
     }
 
     public void addAminoAcidToView(double x, double y, double z, AminoAcidType atomType, Xform moleculeXform,
-                                   boolean putBond, Point3D rotate, Point3D lastAminoAcid) {
+                                   boolean putBond, Point3D rotate, Point3D lastAminoAcid, boolean collided) {
 
         final PhongMaterial aminoAcidColor = new PhongMaterial();
-        aminoAcidColor.setDiffuseColor(atomType.getDiffuseColor());
-        aminoAcidColor.setSpecularColor(atomType.getSpecularColor());
+        if (!collided) {
+            aminoAcidColor.setDiffuseColor(atomType.getDiffuseColor());
+            aminoAcidColor.setSpecularColor(atomType.getSpecularColor());
+        } else {
+            aminoAcidColor.setDiffuseColor(Color.DARKBLUE);
+            aminoAcidColor.setSpecularColor(Color.BLUE);
+        }
 
         final PhongMaterial bondColor = new PhongMaterial();
         bondColor.setDiffuseColor(Color.DARKGREY);
