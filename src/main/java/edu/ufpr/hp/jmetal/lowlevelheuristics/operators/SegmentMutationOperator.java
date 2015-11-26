@@ -48,6 +48,11 @@ public class SegmentMutationOperator implements MutationOperator<IntegerSolution
             int numberOfGenes = randomGenerator.nextInt(5, 7);
             int endPoint = startPoint + numberOfGenes;
 
+            // TODO: Write a test for it
+            if (endPoint >= numberOfVariables) {
+                endPoint = numberOfVariables - 1;
+            }
+
             for (int i = startPoint; i < endPoint; i++) {
 
                 int oldDirection = offspring.getVariableValue(i);

@@ -45,4 +45,14 @@ public enum MovementEnum {
         throw new JMetalException(String.format(UNSUPPORTED_MOVEMENT_MSG, move));
     }
 
+    /*
+     * (non-Javadoc)
+     * @see java.lang.Enum#toString()
+     */
+    @Override
+    public String toString() {
+
+        return "MovementEnum." + this.name();
+    }
+
 }

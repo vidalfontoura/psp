@@ -42,6 +42,11 @@ public class LoopMoveOperator implements MutationOperator<IntegerSolution> {
             int localMovePoint1 = randomGenerator.nextInt(0, numberOfVariables - 1);
             int localMovePoint2 = localMovePoint1 + 5;
 
+            // TODO: Write a test for it
+            if (localMovePoint2 >= numberOfVariables) {
+                localMovePoint2 = numberOfVariables - 1;
+            }
+
             Integer variableValue1 = offspring.getVariableValue(localMovePoint1);
             Integer variableValue2 = offspring.getVariableValue(localMovePoint2);
 

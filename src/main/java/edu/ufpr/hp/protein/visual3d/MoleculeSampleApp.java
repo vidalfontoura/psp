@@ -19,7 +19,6 @@ import javafx.animation.Interpolator;
 import javafx.animation.RotateTransition;
 import javafx.animation.Timeline;
 import javafx.application.Application;
-import javafx.beans.binding.Bindings;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Point3D;
@@ -35,9 +34,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.Box;
-import javafx.scene.shape.CullFace;
 import javafx.scene.shape.Cylinder;
-import javafx.scene.shape.DrawMode;
 import javafx.scene.shape.MeshView;
 import javafx.scene.shape.Sphere;
 import javafx.scene.shape.TriangleMesh;
@@ -95,12 +92,31 @@ public class MoleculeSampleApp extends Application {
     // private static final String PROTEIN_CHAIN =
     // "PHHHHHHHHHHPHHHHHHHPHHHHHHHHPHHHHHHHPPPHPHPHPPH";
 
-    private static final MovementEnum[] FIXED_SOLUTION = new MovementEnum[] { MovementEnum.F, MovementEnum.F,
-        MovementEnum.L, MovementEnum.L, MovementEnum.U, MovementEnum.U, MovementEnum.D, MovementEnum.L, MovementEnum.L,
-        MovementEnum.L, MovementEnum.D, MovementEnum.D, MovementEnum.U, MovementEnum.D, MovementEnum.D, MovementEnum.L,
-        MovementEnum.F, MovementEnum.L, MovementEnum.L };
+    // private static final MovementEnum[] FIXED_SOLUTION = new MovementEnum[] {
+    // MovementEnum.F, MovementEnum.F,
+    // MovementEnum.L, MovementEnum.L, MovementEnum.U, MovementEnum.U,
+    // MovementEnum.D, MovementEnum.L, MovementEnum.L,
+    // MovementEnum.L, MovementEnum.D, MovementEnum.D, MovementEnum.U,
+    // MovementEnum.D, MovementEnum.D, MovementEnum.L,
+    // MovementEnum.F, MovementEnum.L, MovementEnum.L };
+    //
+    // private static final String PROTEIN_CHAIN = "HHHPPHHPHHHHHHHHHPPH";
 
-    private static final String PROTEIN_CHAIN = "HHHPPHHPHHHHHHHHHPPH";
+    // private static final MovementEnum[] FIXED_SOLUTION = new MovementEnum[] {
+    // MovementEnum.R, MovementEnum.U,
+    // MovementEnum.U, MovementEnum.D, MovementEnum.U, MovementEnum.R,
+    // MovementEnum.R, MovementEnum.U, MovementEnum.U,
+    // MovementEnum.R, MovementEnum.D, MovementEnum.L, MovementEnum.L,
+    // MovementEnum.F, MovementEnum.F };
+
+    private static final MovementEnum[] FIXED_SOLUTION = new MovementEnum[] { MovementEnum.F, MovementEnum.L,
+        MovementEnum.R, MovementEnum.L, MovementEnum.L, MovementEnum.U, MovementEnum.U, MovementEnum.R, MovementEnum.R,
+        MovementEnum.D, MovementEnum.D, MovementEnum.L, MovementEnum.D, MovementEnum.F, MovementEnum.R, MovementEnum.R,
+        MovementEnum.F, MovementEnum.U, MovementEnum.F, MovementEnum.L, MovementEnum.L, MovementEnum.R, MovementEnum.D,
+        MovementEnum.D, MovementEnum.F, MovementEnum.L, MovementEnum.L, MovementEnum.R, MovementEnum.F };
+
+    private static final String PROTEIN_CHAIN = "HPPHHHPPHHHPPHHPHPHHHHHHHHHHHH";
+    // private static final String PROTEIN_CHAIN = "HPPHHHPPHHHPPHHP";
     // private static final MovementEnum[] FIXED_SOLUTION =
     // new MovementEnum[] { MovementEnum.F, MovementEnum.F, MovementEnum.L,
     // MovementEnum.L, MovementEnum.F,
@@ -273,12 +289,12 @@ public class MoleculeSampleApp extends Application {
 
     private HBox createControls(RotateTransition rotateTransition) {
 
-        CheckBox cull = new CheckBox("Cull Back");
-        meshView.cullFaceProperty()
-            .bind(Bindings.when(cull.selectedProperty()).then(CullFace.BACK).otherwise(CullFace.NONE));
-        CheckBox wireframe = new CheckBox("Wireframe");
-        meshView.drawModeProperty()
-            .bind(Bindings.when(wireframe.selectedProperty()).then(DrawMode.LINE).otherwise(DrawMode.FILL));
+        // CheckBox cull = new CheckBox("Cull Back");
+        // meshView.cullFaceProperty()
+        // .bind(Bindings.when(cull.selectedProperty()).then(CullFace.BACK).otherwise(CullFace.NONE));
+        // CheckBox wireframe = new CheckBox("Wireframe");
+        // meshView.drawModeProperty()
+        // .bind(Bindings.when(wireframe.selectedProperty()).then(DrawMode.LINE).otherwise(DrawMode.FILL));
 
         CheckBox rotate = new CheckBox("Rotate");
         rotate.selectedProperty().addListener(observable -> {
@@ -291,7 +307,7 @@ public class MoleculeSampleApp extends Application {
 
         energyText.setText(String.format(ENERGY_LABEL, energy));
         collisionsText.setText(String.format(COLLISIONS_LABEL, collisions));
-        HBox controls = new HBox(10, rotate, energyText, collisionsText, cull, wireframe);
+        HBox controls = new HBox(10, rotate, energyText, collisionsText);
         controls.setPadding(new Insets(10));
         return controls;
     }
