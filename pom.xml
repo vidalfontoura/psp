@@ -15,7 +15,6 @@
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>4.11</version>
-            <scope>test</scope>
         </dependency>
         
         <dependency>
@@ -48,21 +47,14 @@
 			<artifactId>commons-math3</artifactId>
 			<version>3.5</version>
 		</dependency>
+		<dependency>
+	<groupId>com.google.guava</groupId>
+	<artifactId>guava</artifactId>
+	<version>18.0</version>
+</dependency>
 		
-        
-    
-        
-    
-        
-    
-    
-
-       
-
     </dependencies>
     
-        
-
 
     <build>
         <finalName>psp</finalName>
