@@ -5,92 +5,89 @@ package edu.ufpr.backtrack.test;
 
 import com.google.common.collect.Lists;
 
-import java.util.Collections;
 import java.util.List;
-import java.util.Random;
 
+import org.uma.jmetal.problem.Problem;
+import org.uma.jmetal.solution.IntegerSolution;
+import org.uma.jmetal.util.pseudorandom.JMetalRandom;
+
+import edu.ufpr.hp.jmetal.problem.PSPProblem;
+import edu.ufpr.hp.protein.energy.EnergyFunction;
 import edu.ufpr.hp.protein.utils.MovementEnum;
 import edu.ufpr.hp.protein.utils.MovementUtils;
+import edu.ufpr.hp.protein.utils.ProteinBuilder;
 
 /**
  *
  *
- * @author Vidal
+ * @author vfontoura
  */
-public class Test2 {
+public class BacktrackInitialization {
 
-    private static int[][][] grid = new int[30][30][30];
+    private int[][][] grid;
 
-    private static List<MovementEnum> MOVE = Lists.newArrayList(MovementEnum.values());
+    private List<MovementEnum> movements;
 
-    private static List<MovementEnum> solutionMoves = Lists.newArrayList();
+    private int count;
 
-    static int count = 0;
+    private int sequenceLength;
 
-    static int sequenceLength = 30;
+    private JMetalRandom random;
 
-    static Random r;
+    private List<MovementEnum> solutionMoves;
 
-    public static void initGrid() {
+    private Problem<IntegerSolution> problem;
 
-        for (int i = 0; i < grid.length; i++) {
-            for (int j = 0; j < grid[i].length; j++) {
-                for (int t = 0; t < grid[i][j].length; t++) {
-                    grid[i][j][t] = -1;
-                }
+    public BacktrackInitialization(JMetalRandom random, Problem<IntegerSolution> problem, String sequence) {
 
-            }
-        }
+        this.sequenceLength = sequence.length();
+        this.random = random;
+        this.problem = problem;
     }
 
-    public static void printGrid() {
+    public List<IntegerSolution> createPopulationAsIntegerSolution(int amountOfSolutions) {
 
-        List<Tuple> tuples = Lists.newArrayList();
-        for (int i = 0; i < grid.length; i++) {
-            for (int j = 0; j < grid[i].length; j++) {
-                for (int t = 0; t < grid[i][j].length; t++) {
-                    int value = grid[i][j][t];
-                    if (value != -1) {
-                        tuples.add(new Tuple(i - 5, j - 5, t - 5, value));
-                    }
+        List<IntegerSolution> population = Lists.newArrayListWithExpectedSize(amountOfSolutions);
 
-                }
+        List<List<MovementEnum>> listMovementEnum = this.createPopulationAsListMovementEnum(amountOfSolutions);
 
+        for (List<MovementEnum> movementEnum : listMovementEnum) {
+            IntegerSolution solution = problem.createSolution();
+            for (int j = 0; j < movementEnum.size(); j++) {
+                int move = movementEnum.get(j).getMove();
+                solution.setVariableValue(j, move);
             }
+            population.add(solution);
         }
 
-        Collections.sort(tuples, (o1, o2) -> Integer.compare(o1.getIndex(), o2.getIndex()));
-        tuples.stream().forEach(c -> System.out.println(c));
-
+        return population;
     }
 
-    public static void main(String[] args) {
+    public List<List<MovementEnum>> createPopulationAsListMovementEnum(int amountOfSolutions) {
 
-        for (int i = 0; i < 1000; i++) {
+        List<List<MovementEnum>> population = Lists.newArrayListWithExpectedSize(amountOfSolutions);
 
-            MOVE = Lists.newArrayList(MovementEnum.values());
-            r = new Random(i);
-            count = 0;
-            solutionMoves = Lists.newArrayList();
+        for (int i = 0; i < amountOfSolutions; i++) {
 
-            initGrid();
-
-            // adding first amino acid
+            this.movements = Lists.newArrayList(MovementEnum.values());
+            this.count = 0;
+            this.grid = createGrid(sequenceLength);
+            this.solutionMoves = Lists.newArrayList();
 
             String lookingAxis = "Z+";
             String headAxis = "Y+";
 
-            boolean move = move(15, 15, 15, lookingAxis, headAxis);
-            // printGrid();
+            int startPoint = grid.length / 2;
 
-            Collections.reverse(solutionMoves);
+            move(startPoint, startPoint, startPoint, lookingAxis, headAxis);
 
-            System.out.println(solutionMoves.toString());
+            population.add(solutionMoves);
+
         }
-
+        return population;
     }
 
-    public static boolean move(int x, int y, int z, String lookingAxis, String headAxis) {
+    private boolean move(int x, int y, int z, String lookingAxis, String headAxis) {
 
         String localLookingAxis = lookingAxis;
         String localHeadAxis = headAxis;
@@ -106,11 +103,11 @@ public class Test2 {
         int newZ = -1;
 
         do {
-            if (MOVE.size() == 0) {
+            if (movements.size() == 0) {
                 break;
             }
-            int index = r.nextInt(MOVE.size());
-            MovementEnum movement = MOVE.remove(index);
+            int index = random.nextInt(0, movements.size() - 1);
+            MovementEnum movement = movements.remove(index);
 
             Object[] coordinates = fromMoveCodeToCoordinates(lookingAxis, headAxis, movement, x, y, z);
 
@@ -125,7 +122,6 @@ public class Test2 {
             newY = yMove;
             newZ = zMove;
 
-            // System.out.println(newX + "," + newY + "," + newZ);
             if (newX < 0 || newY < 0 || newX >= grid.length || newY >= grid.length || newZ < 0 || newZ >= grid.length) {
                 lookingAxis = localLookingAxis;
                 headAxis = localHeadAxis;
@@ -137,7 +133,7 @@ public class Test2 {
                 continue;
             }
 
-            MOVE = Lists.newArrayList(MovementEnum.values());
+            movements = Lists.newArrayList(MovementEnum.values());
             // It was possible to set point
             if (move(newX, newY, newZ, lookingAxis, headAxis)) {
 
@@ -146,13 +142,12 @@ public class Test2 {
                 return true;
             }
 
-        } while (!MOVE.isEmpty());
+        } while (!movements.isEmpty());
 
         lookingAxis = localLookingAxis;
         headAxis = localHeadAxis;
 
-        // System.out.println("Count: " + count);
-        MOVE = Lists.newArrayList(MovementEnum.values());
+        movements = Lists.newArrayList(MovementEnum.values());
 
         grid[x][y][z] = -1;
         count--;
@@ -161,7 +156,7 @@ public class Test2 {
 
     }
 
-    public static boolean isEmpty(int x, int y, int z) {
+    public boolean isEmpty(int x, int y, int z) {
 
         int i = grid[x][y][z];
         return i == -1 ? true : false;
@@ -523,32 +518,44 @@ public class Test2 {
         return array;
     }
 
-}
+    public int[][][] createGrid(int size) {
 
+        int[][][] grid = new int[size][size][size];
 
-class Tuple {
+        for (int x = 0; x < grid.length; x++) {
+            for (int y = 0; y < grid.length; y++) {
+                for (int z = 0; z < grid.length; z++) {
+                    grid[x][y][z] = -1;
+                }
+            }
+        }
+        return grid;
 
-    int x;
-    int y;
-    int z;
-    int index;
-
-    Tuple(int x, int y, int z, int index) {
-        this.x = x;
-        this.y = y;
-        this.z = z;
-        this.index = index;
     }
 
-    public int getIndex() {
+    public static void main(String[] args) {
 
-        return index;
-    }
+        JMetalRandom random = JMetalRandom.getInstance();
+        random.setSeed(1448654320573l);
 
-    @Override
-    public String toString() {
+        String aminoAcidSequence = "HHPPHHHPHHPHHPHPHPHPHHPPHHHPPHHHPPHHHPHHPHHPHPHPHPHHPPHHHPPH";
 
-        return index + ":Point{x=" + x + ", y=" + y + ", z=" + z + "}";
+        Problem<IntegerSolution> pspProblem =
+            new PSPProblem(1, aminoAcidSequence.length() - 1, 0, 4, aminoAcidSequence, 1.0, 0.0005);
+        BacktrackInitialization backtrackInitialization =
+            new BacktrackInitialization(random, pspProblem, aminoAcidSequence);
+
+        List<IntegerSolution> population = backtrackInitialization.createPopulationAsIntegerSolution(100);
+
+        ProteinBuilder proteinBuilder = new ProteinBuilder();
+
+        for (IntegerSolution solution : population) {
+
+            proteinBuilder.buildProteinAminoAcidList(solution, aminoAcidSequence, 1);
+            System.out.println(EnergyFunction.getCollisionsCount(proteinBuilder.getAminoAcidsList()) + ":" + solution);
+
+        }
+
     }
 
 }
